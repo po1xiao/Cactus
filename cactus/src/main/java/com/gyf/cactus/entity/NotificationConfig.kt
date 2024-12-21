@@ -56,14 +56,6 @@ data class NotificationConfig(
      */
     var hideNotification: Boolean = false,
     /**
-     * 自定义布局
-     */
-    var remoteViews: RemoteViews? = null,
-    /**
-     * 自定义大布局
-     */
-    var bigRemoteViews: RemoteViews? = null,
-    /**
      * 点击标题栏跳转事件
      */
     @Transient
@@ -109,8 +101,6 @@ data class NotificationConfig(
         source.readParcelable<Bitmap>(Bitmap::class.java.classLoader),
         1 == source.readInt(),
         1 == source.readInt(),
-        source.readParcelable<RemoteViews>(RemoteViews::class.java.classLoader),
-        source.readParcelable<RemoteViews>(RemoteViews::class.java.classLoader),
         source.readParcelable<PendingIntent>(PendingIntent::class.java.classLoader),
         source.readParcelable<Notification>(Notification::class.java.classLoader),
         source.readParcelable<Parcelable>(Parcelable::class.java.classLoader)
@@ -129,8 +119,6 @@ data class NotificationConfig(
         writeParcelable(largeIconBitmap, 0)
         writeInt((if (hideNotificationAfterO) 1 else 0))
         writeInt((if (hideNotification) 1 else 0))
-        writeParcelable(remoteViews, 0)
-        writeParcelable(bigRemoteViews, 0)
         writeParcelable(pendingIntent, 0)
         writeParcelable(notification, 0)
         writeParcelable(notificationChannel, 0)

@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
@@ -63,14 +64,24 @@ class App : Application(), CactusCallback {
             PendingIntent.getActivity(this, 0, Intent().apply {
                 setClass(this@App, MainActivity::class.java)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }, PendingIntent.FLAG_UPDATE_CURRENT)
+            }, PendingIntent.FLAG_MUTABLE)
         //可选，注册广播监听器
-        registerReceiver(MainReceiver(), IntentFilter().apply {
-            addAction(Cactus.CACTUS_WORK)
-            addAction(Cactus.CACTUS_STOP)
-            addAction(Cactus.CACTUS_BACKGROUND)
-            addAction(Cactus.CACTUS_FOREGROUND)
-        })
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(MainReceiver(), IntentFilter().apply {
+                addAction(Cactus.CACTUS_WORK)
+                addAction(Cactus.CACTUS_STOP)
+                addAction(Cactus.CACTUS_BACKGROUND)
+                addAction(Cactus.CACTUS_FOREGROUND)
+            }, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(MainReceiver(), IntentFilter().apply {
+                addAction(Cactus.CACTUS_WORK)
+                addAction(Cactus.CACTUS_STOP)
+                addAction(Cactus.CACTUS_BACKGROUND)
+                addAction(Cactus.CACTUS_FOREGROUND)
+            })
+        }
+
 
         cactus {
             //可选，设置通知栏点击事件

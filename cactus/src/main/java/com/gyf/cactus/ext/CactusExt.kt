@@ -388,7 +388,7 @@ internal fun Context.startOnePixActivity() {
         val onePixIntent = Intent(this, OnePixActivity::class.java)
         onePixIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         onePixIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        val pendingIntent = PendingIntent.getActivity(this, 0, onePixIntent, 0)
+        val pendingIntent = PendingIntent.getActivity(this, 0, onePixIntent, PendingIntent.FLAG_IMMUTABLE)
         try {
             pendingIntent.send()
         } catch (e: Exception) {

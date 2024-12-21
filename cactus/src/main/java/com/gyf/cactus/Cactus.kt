@@ -189,7 +189,7 @@ class Cactus private constructor() {
      */
     fun setRemoteViews(remoteViews: RemoteViews) = apply {
         mNotificationConfig.hideNotification = false
-        mNotificationConfig.remoteViews = remoteViews
+        // mNotificationConfig.remoteViews = remoteViews
     }
 
     /**
@@ -200,7 +200,7 @@ class Cactus private constructor() {
      */
     fun setBigRemoteViews(bigRemoteViews: RemoteViews) = apply {
         mNotificationConfig.hideNotification = false
-        mNotificationConfig.bigRemoteViews = bigRemoteViews
+        // mNotificationConfig.bigRemoteViews = bigRemoteViews
     }
 
     /**

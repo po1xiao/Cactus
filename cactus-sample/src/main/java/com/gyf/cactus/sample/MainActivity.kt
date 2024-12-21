@@ -9,7 +9,7 @@ import androidx.lifecycle.Observer
 import com.gyf.cactus.ext.cactusRestart
 import com.gyf.cactus.ext.cactusUnregister
 import com.gyf.cactus.ext.cactusUpdateNotification
-import kotlinx.android.synthetic.main.activity_main.*
+import com.gyf.cactus.sample.databinding.ActivityMainBinding
 
 /**
  * @author geyifeng
@@ -37,26 +37,28 @@ class MainActivity : BaseActivity() {
         private const val TIME = 4000L
     }
 
+    private lateinit var binding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         initData()
         setListener()
     }
 
     private fun initData() {
-        tvVersion.text = "Version(版本)：${BuildConfig.VERSION_NAME}"
+        binding.tvVersion.text = "Version(版本)：${BuildConfig.VERSION_NAME}"
         App.mEndDate.observe(this, Observer {
-            tvLastDate.text = it
+            binding.tvLastDate.text = it
         })
         App.mLastTimer.observe(this, Observer<String> {
-            tvLastTimer.text = it
+            binding.tvLastTimer.text = it
         })
         App.mTimer.observe(this, Observer<String> {
-            tvTimer.text = it
+            binding.tvTimer.text = it
         })
         App.mStatus.observe(this, Observer {
-            tvStatus.text = if (it) {
+            binding.tvStatus.text = if (it) {
                 "Operating status(运行状态):Running(运行中)"
             } else {
                 "Operating status(运行状态):Stopped(已停止)"
@@ -65,24 +67,24 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setListener() {
-        //更新通知栏信息
-        btnUpdate.onClick {
+        // 更新通知栏信息
+        binding.btnUpdate.onClick {
             val num = (0..8).random()
             cactusUpdateNotification {
                 setTitle(list[num].first)
                 setContent(list[num].second)
             }
         }
-        //停止
-        btnStop.onClick {
+        // 停止
+        binding.btnStop.onClick {
             cactusUnregister()
         }
-        //重启
-        btnRestart.onClick {
+        // 重启
+        binding.btnRestart.onClick {
             cactusRestart()
         }
-        //奔溃
-        btnCrash.setOnClickListener {
+        // 崩溃
+        binding.btnCrash.setOnClickListener {
             Toast.makeText(
                 this,
                 "The app will crash after three seconds(3s后奔溃)",

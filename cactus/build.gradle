@@ -3,12 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'com.novoda.bintray-release'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
+    compileSdkVersion 34
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 29
+        minSdkVersion 21
+        targetSdkVersion 34
     }
 
 
@@ -23,10 +22,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.work:work-runtime:2.4.0'
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.work:work-runtime:2.9.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 publish {

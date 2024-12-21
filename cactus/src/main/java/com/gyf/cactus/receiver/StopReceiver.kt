@@ -2,10 +2,11 @@ package com.gyf.cactus.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.RECEIVER_NOT_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import com.gyf.cactus.entity.Constant
-import com.gyf.cactus.ext.mainPid
 
 /**
  * 注销服务监听
@@ -27,7 +28,11 @@ internal class StopReceiver private constructor(val context: Context) : Broadcas
     private var mActionStop = "${Constant.CACTUS_FLAG_STOP}.${context.packageName}"
 
     init {
-        context.registerReceiver(this, IntentFilter(mActionStop))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(this, IntentFilter(mActionStop), RECEIVER_NOT_EXPORTED)
+        } else {
+            context.registerReceiver(this, IntentFilter(mActionStop))
+        }
     }
 
     /**

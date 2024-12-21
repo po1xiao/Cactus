@@ -1,13 +1,16 @@
 package com.gyf.cactus.ext
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.gyf.cactus.R
@@ -45,14 +48,27 @@ internal fun Service.setNotification(
     notificationConfig: NotificationConfig,
     isHideService: Boolean = false
 ) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        val notificationService = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (!notificationService.areNotificationsEnabled()) {
+            return
+        }
+    }
     val managerCompat = NotificationManagerCompat.from(this)
     val notification = getNotification(notificationConfig)
     notificationConfig.apply {
-        //更新Notification
+        // 更新Notification
         managerCompat.notify(serviceId, notification)
-        //设置前台服务Notification
+        // 设置前台服务Notification
         startForeground(serviceId, notification)
-        //隐藏Notification
+        // 隐藏Notification
         if (hideNotification) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (managerCompat.getNotificationChannel(notification.channelId) != null
@@ -84,7 +100,7 @@ internal fun Service.setNotification(
 internal fun Context.getNotification(notificationConfig: NotificationConfig): Notification =
     notificationConfig.run {
         val managerCompat = NotificationManagerCompat.from(this@getNotification)
-        //构建Notification
+        // 构建Notification
         val notification =
             notification ?: NotificationCompat.Builder(this@getNotification, channelId)
                 .setContentTitle(title)
@@ -104,16 +120,16 @@ internal fun Context.getNotification(notificationConfig: NotificationConfig): No
                 .setAutoCancel(true)
                 .setVisibility(NotificationCompat.VISIBILITY_SECRET)
                 .setPriority(NotificationCompat.PRIORITY_MIN)
-                .apply {
-                    remoteViews?.also {
-                        setContent(it)
-                    }
-                    bigRemoteViews?.also {
-                        setCustomBigContentView(it)
-                    }
-                }
+                // .apply {
+                //     remoteViews?.also {
+                //         setContent(it)
+                //     }
+                //     bigRemoteViews?.also {
+                //         setCustomBigContentView(it)
+                //     }
+                // }
                 .build()
-        //设置渠道
+        // 设置渠道
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             managerCompat.getNotificationChannel(notification.channelId) == null
         ) {

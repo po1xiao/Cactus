@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.*
 import android.media.MediaPlayer
+import android.os.Build
 import android.os.IBinder
 import com.gyf.cactus.Cactus
 import com.gyf.cactus.entity.CactusConfig
@@ -296,7 +297,7 @@ class LocalService : Service(), IBinder.DeathRecipient {
         if (times > 1 && sStartTimes == 1) {
             mCactusConfig.defaultConfig.restartIntent?.also {
                 try {
-                    PendingIntent.getActivity(this, 0, it, 0).send()
+                    PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_MUTABLE).send()
                 } catch (e: Exception) {
                 }
             }
@@ -324,12 +325,21 @@ class LocalService : Service(), IBinder.DeathRecipient {
             mServiceReceiver = ServiceReceiver()
         }
         mServiceReceiver?.let {
-            registerReceiver(it, IntentFilter().apply {
-                addAction(Intent.ACTION_SCREEN_ON)
-                addAction(Intent.ACTION_SCREEN_OFF)
-                addAction(Cactus.CACTUS_BACKGROUND)
-                addAction(Cactus.CACTUS_FOREGROUND)
-            })
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(it, IntentFilter().apply {
+                    addAction(Intent.ACTION_SCREEN_ON)
+                    addAction(Intent.ACTION_SCREEN_OFF)
+                    addAction(Cactus.CACTUS_BACKGROUND)
+                    addAction(Cactus.CACTUS_FOREGROUND)
+                },RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(it, IntentFilter().apply {
+                    addAction(Intent.ACTION_SCREEN_ON)
+                    addAction(Intent.ACTION_SCREEN_OFF)
+                    addAction(Cactus.CACTUS_BACKGROUND)
+                    addAction(Cactus.CACTUS_FOREGROUND)
+                })
+            }
         }
     }
 
