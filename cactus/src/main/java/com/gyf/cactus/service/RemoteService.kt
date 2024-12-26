@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.Process
+import android.util.Log
 import com.gyf.cactus.entity.CactusConfig
 import com.gyf.cactus.entity.Constant
 import com.gyf.cactus.entity.ICactusInterface
@@ -20,6 +21,7 @@ import kotlin.system.exitProcess
  * @date 2019-08-28 17:05
  */
 class RemoteService : Service(), IBinder.DeathRecipient {
+    private val TAG = "CactusRemoteService"
 
     /**
      * 配置信息
@@ -104,11 +106,12 @@ class RemoteService : Service(), IBinder.DeathRecipient {
             setNotification(mCactusConfig.notificationConfig)
         } catch (e: Exception) {
         }
-        registerStopReceiver {
-            mIsStop = true
-            sTimes = mConnectionTimes
-            stopService()
-        }
+        Log.d(TAG, "onCreate")
+        // registerStopReceiver {
+        //     mIsStop = true
+        //     sTimes = mConnectionTimes
+        //     stopService()
+        // }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -149,6 +152,13 @@ class RemoteService : Service(), IBinder.DeathRecipient {
                 ++mConnectionTimes
             }
             sTimes = mConnectionTimes
+        }
+
+        override fun stop() {
+            Log.d(TAG, "stop: SERVICE_STOP")
+            mIsStop = true
+            sTimes = mConnectionTimes
+            stopService()
         }
     }
 

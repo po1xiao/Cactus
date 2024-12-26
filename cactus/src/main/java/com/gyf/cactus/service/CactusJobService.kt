@@ -1,6 +1,5 @@
 package com.gyf.cactus.service
 
-import android.app.Service
 import android.app.job.JobInfo
 import android.app.job.JobParameters
 import android.app.job.JobScheduler
@@ -9,18 +8,21 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.annotation.RequiresApi
+import android.util.Log
 import com.gyf.cactus.entity.CactusConfig
 import com.gyf.cactus.entity.Constant
 import com.gyf.cactus.ext.*
+import com.gyf.cactus.other.CactusMsgEvent
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 /**
  * @author geyifeng
  * @date 2019-08-30 13:03
  */
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 class CactusJobService : JobService() {
-
+    private val TAG = "CactusJobService"
     private lateinit var mJobScheduler: JobScheduler
 
     private lateinit var mCactusConfig: CactusConfig
@@ -36,10 +38,14 @@ class CactusJobService : JobService() {
         super.onCreate()
         mCactusConfig = getConfig()
         registerJob()
-        registerStopReceiver {
-            mIsStop = true
-            stopService()
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this)
         }
+        Log.d(TAG, "onCreate")
+        // registerStopReceiver {
+        //     mIsStop = true
+        //     stopService()
+        // }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -48,13 +54,27 @@ class CactusJobService : JobService() {
         }
         setNotification(mCactusConfig.notificationConfig)
         registerCactus(mCactusConfig)
-        return Service.START_STICKY
+        return START_STICKY
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onEvent(messageEvent: CactusMsgEvent<Any>) {
+        val code: Int = messageEvent.code
+        if (code == CactusMsgEvent.SERVICE_STOP) {
+            Log.d(TAG, "onEvent: SERVICE_STOP")
+            mIsStop = true
+            stopService()
+        }
     }
 
     override fun onDestroy() {
         stopForeground(true)
         mJobScheduler.cancel(mJobId)
         saveJobId(-1)
+        Log.d(TAG, "onDestroy")
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this)
+        }
         super.onDestroy()
     }
 
@@ -91,13 +111,13 @@ class CactusJobService : JobService() {
         ).apply {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    setMinimumLatency(JobInfo.DEFAULT_INITIAL_BACKOFF_MILLIS) //执行的最小延迟时间
-                    setOverrideDeadline(JobInfo.DEFAULT_INITIAL_BACKOFF_MILLIS)  //执行的最长延时时间
+                    setMinimumLatency(JobInfo.DEFAULT_INITIAL_BACKOFF_MILLIS) // 执行的最小延迟时间
+                    setOverrideDeadline(JobInfo.DEFAULT_INITIAL_BACKOFF_MILLIS)  // 执行的最长延时时间
                     setMinimumLatency(JobInfo.DEFAULT_INITIAL_BACKOFF_MILLIS)
                     setBackoffCriteria(
                         JobInfo.DEFAULT_INITIAL_BACKOFF_MILLIS,
                         JobInfo.BACKOFF_POLICY_LINEAR
-                    )//线性重试方案
+                    )// 线性重试方案
                 } else {
                     setPeriodic(JobInfo.DEFAULT_INITIAL_BACKOFF_MILLIS)
                     setRequiresDeviceIdle(true)

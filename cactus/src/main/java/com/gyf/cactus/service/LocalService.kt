@@ -6,11 +6,16 @@ import android.content.*
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import com.gyf.cactus.Cactus
 import com.gyf.cactus.entity.CactusConfig
 import com.gyf.cactus.entity.Constant
 import com.gyf.cactus.entity.ICactusInterface
 import com.gyf.cactus.ext.*
+import com.gyf.cactus.other.CactusMsgEvent
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 /**
  * 本地服务
@@ -19,6 +24,7 @@ import com.gyf.cactus.ext.*
  * @date 2019-08-28 17:05
  */
 class LocalService : Service(), IBinder.DeathRecipient {
+    private val TAG = "LocalService"
 
     /**
      * 配置信息
@@ -117,10 +123,28 @@ class LocalService : Service(), IBinder.DeathRecipient {
     override fun onCreate() {
         super.onCreate()
         mCactusConfig = getConfig()
-        registerStopReceiver {
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this)
+        }
+        Log.d(TAG, "onCreate")
+        // registerStopReceiver {
+        //     mIsStop = true
+        //     sTimes = mConnectionTimes
+        //     stopService()
+        // }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onEvent(messageEvent: CactusMsgEvent<Any>) {
+        val code: Int = messageEvent.code
+        if (code == CactusMsgEvent.SERVICE_STOP) {
+            Log.d(TAG, "onEvent: SERVICE_STOP")
             mIsStop = true
             sTimes = mConnectionTimes
             stopService()
+            mIInterface?.apply {
+                stop()
+            }
         }
     }
 
@@ -134,6 +158,10 @@ class LocalService : Service(), IBinder.DeathRecipient {
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "onDestroy")
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this)
+        }
         super.onDestroy()
         stopForeground(true)
         stopBind()
@@ -160,6 +188,10 @@ class LocalService : Service(), IBinder.DeathRecipient {
             sTimes = mConnectionTimes
             doWork((mConnectionTimes + 1) / 2)
         }
+
+        override fun stop() {
+            Log.d(TAG, "LocalBinder stop")
+        }
     }
 
     /**
@@ -177,7 +209,7 @@ class LocalService : Service(), IBinder.DeathRecipient {
                         playMusic()
                     }
                     Intent.ACTION_SCREEN_ON -> {
-                        //亮屏，关闭1像素Activity
+                        // 亮屏，关闭1像素Activity
                         log("screen on")
                         closeOnePix()
                         if (!mCactusConfig.defaultConfig.backgroundMusicEnabled) {
@@ -331,7 +363,7 @@ class LocalService : Service(), IBinder.DeathRecipient {
                     addAction(Intent.ACTION_SCREEN_OFF)
                     addAction(Cactus.CACTUS_BACKGROUND)
                     addAction(Cactus.CACTUS_FOREGROUND)
-                },RECEIVER_NOT_EXPORTED)
+                }, RECEIVER_NOT_EXPORTED)
             } else {
                 registerReceiver(it, IntentFilter().apply {
                     addAction(Intent.ACTION_SCREEN_ON)

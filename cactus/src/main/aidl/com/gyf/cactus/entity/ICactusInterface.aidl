@@ -6,4 +6,5 @@ import com.gyf.cactus.entity.CactusConfig;
 interface ICactusInterface {
     void wakeup(in CactusConfig config);
     void connectionTimes(in int time);
+    void stop();
 }

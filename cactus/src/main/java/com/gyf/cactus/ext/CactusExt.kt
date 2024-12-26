@@ -1,14 +1,18 @@
 package com.gyf.cactus.ext
 
+import android.Manifest
 import android.app.Activity
 import android.app.Application
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
@@ -18,12 +22,13 @@ import com.gyf.cactus.callback.AppBackgroundCallback
 import com.gyf.cactus.entity.CactusConfig
 import com.gyf.cactus.entity.Constant
 import com.gyf.cactus.exception.CactusUncaughtExceptionHandler
+import com.gyf.cactus.other.CactusMsgEvent
 import com.gyf.cactus.pix.OnePixActivity
-import com.gyf.cactus.receiver.StopReceiver
 import com.gyf.cactus.service.CactusJobService
 import com.gyf.cactus.service.LocalService
 import com.gyf.cactus.service.RemoteService
 import com.gyf.cactus.workmanager.CactusWorker
+import org.greenrobot.eventbus.EventBus
 import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 
@@ -118,15 +123,6 @@ val Context.cactusIsRunning
     get() = Cactus.instance.isRunning(this)
 
 /**
- * kotlin里使用注册Receiver
- *
- * @receiver Context
- * @param block Function0<Unit>
- */
-internal fun Context.registerStopReceiver(block: () -> Unit) =
-    StopReceiver.newInstance(this).register(block)
-
-/**
  * 注册Cactus服务
  *
  * @receiver Context
@@ -174,7 +170,8 @@ internal fun Context.unregister() {
                     unregisterWorker()
                 }
             }
-            sendBroadcast(Intent("${Constant.CACTUS_FLAG_STOP}.$packageName"))
+            EventBus.getDefault().post(CactusMsgEvent<Any>(CactusMsgEvent.SERVICE_STOP))
+            // sendBroadcast(Intent("${Constant.CACTUS_FLAG_STOP}.$packageName"))
             sMainHandler.postDelayed({
                 mAppBackgroundCallback?.also {
                     it.useCallback(false)
@@ -211,6 +208,18 @@ internal fun Context.updateNotification(cactusConfig: CactusConfig) {
     saveConfig(cactusConfig)
     val managerCompat = NotificationManagerCompat.from(this)
     val notification = getNotification(cactusConfig.notificationConfig)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+    }
+    val notificationService = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    if (!notificationService.areNotificationsEnabled()) {
+        return
+    }
     managerCompat.notify(cactusConfig.notificationConfig.serviceId, notification)
 }
 
